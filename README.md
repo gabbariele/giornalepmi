@@ -109,6 +109,7 @@ wp-content/themes/gpmi/
 bin/
   fetch-fonts.php        scarica Roboto in locale
   convert-images.php     genera WebP e AVIF
+  write-robots.php       scrive robots.txt su disco (necessario su WordOps)
 ```
 
 ## Indicizzazione e risposte generative
@@ -193,6 +194,41 @@ aggiuntivo*:
 ```css
 :root { --gp-widget-iframe-height: 560px; }
 ```
+
+## robots.txt su WordOps
+
+WordOps intercetta `/robots.txt` con un blocco nginx in
+`/etc/nginx/common/wpcommon-phpXX.conf`:
+
+```nginx
+location = /robots.txt {
+    try_files $uri $uri/ /index.php?$args @robots;
+}
+location @robots {
+    return 200 "User-agent: *
+Disallow: /wp-admin/
+Allow: /wp-admin/admin-ajax.php
+";
+}
+```
+
+Se non esiste un file vero, nginx serve quel fallback hardcoded e WordPress non
+viene mai chiamato: nessuna direttiva del tema raggiunge i crawler. Il primo
+parametro di `try_files` e' pero' `$uri`, quindi basta che il file esista.
+
+```bash
+php bin/write-robots.php --apply
+```
+
+Scrive in `htdocs/robots.txt` esattamente cio' che WordPress genererebbe, filtri
+del tema compresi. Va rilanciato dopo ogni modifica a `gpmi_ai_crawlers`.
+
+Quel file di configurazione e' condiviso da tutti i siti del server e viene
+sovrascritto dagli aggiornamenti di WordOps: meglio non modificarlo.
+
+La CDN tiene `robots.txt` in cache per ore (`max-age=14400` su Cloudflare):
+dopo la scrittura va purgato quell'URL, altrimenti si continua a vedere la
+versione vecchia.
 
 ## Note operative
 
