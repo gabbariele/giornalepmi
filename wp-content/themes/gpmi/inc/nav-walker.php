@@ -101,12 +101,31 @@ class GPMI_Nav_Walker extends Walker_Nav_Menu {
 /**
  * Menu di ripiego quando nessun menu e' assegnato alla posizione principale.
  *
- * Passando da un tema all'altro le posizioni dei menu si azzerano: senza
- * questo ripiego la barra di navigazione resterebbe vuota finche' qualcuno non
- * riassegna il menu in Aspetto - Menu. Qui mostra invece le categorie con piu'
- * articoli, cosi' il giornale resta navigabile da subito.
+ * Nell'ordine: si riusa il menu del footer, che sul giornale contiene gia' le
+ * sezioni; se manca anche quello, si elencano le categorie con piu' articoli.
+ * Cosi' la barra di navigazione non resta mai vuota, nemmeno subito dopo un
+ * cambio di tema, quando WordPress azzera le posizioni dei menu.
  */
 function gpmi_menu_fallback() {
+	if ( has_nav_menu( 'footer' ) ) {
+		wp_nav_menu( array(
+			'theme_location' => 'footer',
+			'menu_id'        => 'primary-menu',
+			'menu_class'     => 'primary-menu',
+			'container'      => false,
+			'walker'         => new GPMI_Nav_Walker(),
+			'fallback_cb'    => 'gpmi_category_menu',
+		) );
+		return;
+	}
+
+	gpmi_category_menu();
+}
+
+/**
+ * Elenco delle categorie con piu' articoli, ultimo ripiego per la navigazione.
+ */
+function gpmi_category_menu() {
 	$categories = get_categories( array(
 		'orderby'    => 'count',
 		'order'      => 'DESC',

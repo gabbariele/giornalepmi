@@ -36,6 +36,10 @@ defined( 'ABSPATH' ) || exit;
 			<div class="container footer-bottom-inner">
 
 				<div class="footer-credit">
+					<p class="footer-name"><?php echo esc_html( get_bloginfo( 'name' ) ); ?></p>
+
+					<?php gpmi_masthead_legal(); ?>
+
 					<?php
 					$footer_text = gpmi_option( 'footer_text' );
 					if ( $footer_text ) {

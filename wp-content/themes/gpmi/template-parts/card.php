@@ -74,7 +74,13 @@ $overlay = in_array( $variant, array( 'hero', 'tile' ), true );
 			?>
 
 			<?php if ( 'grid' === $variant ) : ?>
-				<p class="card-excerpt"><?php echo esc_html( get_the_excerpt() ); ?></p>
+				<p class="card-excerpt">
+					<?php
+					// Nella card serve testo puro: gli estratti scritti a mano
+					// possono contenere link, che vanno rimossi, non escapati.
+					echo esc_html( wp_strip_all_tags( get_the_excerpt() ) );
+					?>
+				</p>
 			<?php endif; ?>
 		<?php else : ?>
 			<div class="entry-meta">

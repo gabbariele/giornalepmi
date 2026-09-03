@@ -186,6 +186,12 @@ function gpmi_schema_news_article( $data ) {
 		$data['headline'] = gpmi_plain_text( $data['headline'], 110 );
 	}
 
+	// Il direttore responsabile e' un dato di affidabilita' della fonte.
+	$editor = gpmi_option( 'editor_name' );
+	if ( $editor ) {
+		$data['editor'] = array( '@type' => 'Person', 'name' => $editor );
+	}
+
 	// Indica quale parte della pagina rappresenta la notizia in forma parlata.
 	$data['speakable'] = array(
 		'@type'       => 'SpeakableSpecification',
@@ -273,11 +279,7 @@ function gpmi_fallback_schema() {
 			'name'  => get_the_author_meta( 'display_name', $author_id ),
 			'url'   => get_author_posts_url( $author_id ),
 		),
-		'publisher'           => array(
-			'@type' => 'NewsMediaOrganization',
-			'name'  => get_bloginfo( 'name' ),
-			'url'   => home_url( '/' ),
-		),
+		'publisher'           => gpmi_publisher_schema(),
 		'articleSection'      => array_values( wp_get_post_categories( $post_id, array( 'fields' => 'names' ) ) ),
 	);
 
@@ -285,11 +287,9 @@ function gpmi_fallback_schema() {
 		$schema['image'] = $image;
 	}
 
-	if ( has_custom_logo() ) {
-		$logo = wp_get_attachment_image_url( (int) get_theme_mod( 'custom_logo' ), 'full' );
-		if ( $logo ) {
-			$schema['publisher']['logo'] = array( '@type' => 'ImageObject', 'url' => $logo );
-		}
+	$editor = gpmi_option( 'editor_name' );
+	if ( $editor ) {
+		$schema['editor'] = array( '@type' => 'Person', 'name' => $editor );
 	}
 
 	printf(
@@ -430,3 +430,37 @@ function gpmi_flush_rewrites() {
 	flush_rewrite_rules();
 }
 add_action( 'after_switch_theme', 'gpmi_flush_rewrites' );
+
+/**
+ * Dati dell'editore per i dati strutturati.
+ *
+ * NewsMediaOrganization con editore e sede reali: e' il blocco da cui i motori
+ * di ricerca e i sistemi generativi ricavano di chi e' la testata.
+ *
+ * @return array
+ */
+function gpmi_publisher_schema() {
+	$publisher = array(
+		'@type' => 'NewsMediaOrganization',
+		'name'  => gpmi_option( 'publisher_name' ) ? gpmi_option( 'publisher_name' ) : get_bloginfo( 'name' ),
+		'url'   => home_url( '/' ),
+	);
+
+	$city = gpmi_option( 'publisher_city' );
+	if ( $city ) {
+		$publisher['address'] = array(
+			'@type'           => 'PostalAddress',
+			'addressLocality' => $city,
+			'addressCountry'  => 'IT',
+		);
+	}
+
+	if ( has_custom_logo() ) {
+		$logo = wp_get_attachment_image_url( (int) get_theme_mod( 'custom_logo' ), 'full' );
+		if ( $logo ) {
+			$publisher['logo'] = array( '@type' => 'ImageObject', 'url' => $logo );
+		}
+	}
+
+	return $publisher;
+}

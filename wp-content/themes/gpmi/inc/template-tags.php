@@ -232,12 +232,20 @@ function gpmi_breadcrumbs() {
 /**
  * Paginazione degli archivi.
  *
- * @param WP_Query|null $query Query da paginare.
+ * @param WP_Query|int|null $query Query da paginare, o direttamente il numero
+ *                                 di pagine quando il conteggio e' calcolato
+ *                                 a mano (griglia della homepage).
  */
 function gpmi_pagination( $query = null ) {
+	if ( is_numeric( $query ) ) {
+		$total = (int) $query;
+	} else {
+		$total = $query instanceof WP_Query ? (int) $query->max_num_pages : 0;
+	}
+
 	$links = paginate_links(
 		array(
-			'total'     => $query ? $query->max_num_pages : 0,
+			'total'     => $total,
 			'current'   => max( 1, get_query_var( 'paged' ) ),
 			'mid_size'  => 1,
 			'end_size'  => 1,
@@ -290,4 +298,47 @@ function gpmi_site_branding() {
 		esc_url( home_url( '/' ) ),
 		esc_html( get_bloginfo( 'name' ) )
 	);
+}
+
+/**
+ * Dati legali della testata, per il footer.
+ *
+ * Una testata giornalistica registrata deve indicare editore e direttore
+ * responsabile in modo raggiungibile da ogni pagina: qui stanno accanto al
+ * nome del giornale, non nascosti in una pagina di servizio.
+ */
+function gpmi_masthead_legal() {
+	$publisher = gpmi_option( 'publisher_name' );
+	$city      = gpmi_option( 'publisher_city' );
+	$editor    = gpmi_option( 'editor_name' );
+	$reg       = gpmi_option( 'registration' );
+
+	if ( ! $publisher && ! $editor && ! $reg ) {
+		return;
+	}
+
+	echo '<div class="masthead-legal">';
+
+	if ( $publisher ) {
+		printf(
+			'<p><span class="legal-label">%s</span> %s%s</p>',
+			esc_html__( 'Editore', 'gpmi' ),
+			esc_html( $publisher ),
+			$city ? ' &ndash; ' . esc_html( $city ) : ''
+		);
+	}
+
+	if ( $editor ) {
+		printf(
+			'<p><span class="legal-label">%s</span> %s</p>',
+			esc_html__( 'Direttore responsabile', 'gpmi' ),
+			esc_html( $editor )
+		);
+	}
+
+	if ( $reg ) {
+		printf( '<p class="legal-registration">%s</p>', esc_html( $reg ) );
+	}
+
+	echo '</div>';
 }

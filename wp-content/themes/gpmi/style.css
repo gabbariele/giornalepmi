@@ -1173,10 +1173,23 @@ select {
 	font-size: 16px;
 }
 
-.author-box p {
-	margin: 0;
+.author-bio {
 	font-size: 14px;
 	color: var(--gp-ink-2);
+}
+
+.author-bio p {
+	margin: 0 0 .5em;
+}
+
+.author-bio p:last-child {
+	margin-bottom: 0;
+}
+
+.author-bio a {
+	color: var(--gp-link);
+	text-decoration: underline;
+	text-underline-offset: 2px;
 }
 
 /* Navigazione fra articoli */
@@ -1554,6 +1567,27 @@ select {
 
 .footer-credit p {
 	margin: 0;
+}
+
+.footer-name {
+	margin-bottom: 4px !important;
+	font-weight: 700;
+	color: #fff;
+}
+
+.masthead-legal {
+	margin-bottom: 6px;
+	font-size: 12.5px;
+	line-height: 1.65;
+	color: #9aa2ad;
+}
+
+.legal-label {
+	color: #c9ced6;
+}
+
+.legal-registration {
+	margin-top: 2px !important;
 }
 
 .footer-menu,

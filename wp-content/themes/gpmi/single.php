@@ -78,7 +78,16 @@ get_header();
 							<h2 class="author-name">
 								<a href="<?php echo esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ); ?>" rel="author"><?php the_author(); ?></a>
 							</h2>
-							<p><?php echo esc_html( $author_bio ); ?></p>
+							<div class="author-bio">
+								<?php
+								/*
+								 * Le biografie contengono quasi sempre link e paragrafi:
+								 * vanno filtrate con wp_kses_post, non escapate, altrimenti
+								 * i tag finiscono a schermo come testo.
+								 */
+								echo wp_kses_post( wpautop( $author_bio ) );
+								?>
+							</div>
 						</div>
 					</aside>
 				<?php endif; ?>

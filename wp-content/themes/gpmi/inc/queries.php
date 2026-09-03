@@ -93,18 +93,23 @@ add_action( 'switch_theme', 'gpmi_flush_query_cache' );
  * @return WP_Query
  */
 function gpmi_query_from_ids( array $ids ) {
-	if ( empty( $ids ) ) {
-		return new WP_Query( array( 'post__in' => array( 0 ) ) );
-	}
-
-	return new WP_Query( array(
+	/*
+	 * Con post__in vuoto WordPress non riconosce piu' la query come specifica,
+	 * la tratta come query di home e ci antepone da solo gli articoli pinnati.
+	 * Per ottenere davvero zero risultati servono i parametri espliciti,
+	 * ignore_sticky_posts compreso.
+	 */
+	$args = array(
 		'post_type'           => 'post',
-		'post__in'            => $ids,
+		'post_status'         => 'publish',
+		'post__in'            => $ids ? $ids : array( 0 ),
 		'orderby'             => 'post__in',
-		'posts_per_page'      => count( $ids ),
+		'posts_per_page'      => $ids ? count( $ids ) : 1,
 		'ignore_sticky_posts' => true,
 		'no_found_rows'       => true,
-	) );
+	);
+
+	return new WP_Query( $args );
 }
 
 /**
@@ -114,33 +119,18 @@ function gpmi_query_from_ids( array $ids ) {
  * @return WP_Query
  */
 function gpmi_featured_query( $limit = 5 ) {
-	/*
-	 * Gli articoli che la redazione mette "in cima alla pagina principale"
-	 * vengono prima di tutto il resto: e' il modo con cui WordPress esprime
-	 * una scelta editoriale, e va rispettato.
-	 */
-	$ids = gpmi_sticky_ids( $limit );
+	// Apertura del giornale: gli ultimi pubblicati, senza eccezioni.
+	return gpmi_query_from_ids( gpmi_featured_ids( $limit ) );
+}
 
-	// Poi la categoria in evidenza, se ne e' stata scelta una.
-	$featured_cat = gpmi_option( 'featured_category', '' );
-
-	if ( $featured_cat && count( $ids ) < $limit ) {
-		$ids = array_merge( $ids, gpmi_get_post_ids( 'featured', array(
-			'posts_per_page' => $limit - count( $ids ),
-			'category_name'  => $featured_cat,
-			'post__not_in'   => $ids,
-		) ) );
-	}
-
-	// Infine i piu' recenti, per completare la griglia.
-	if ( count( $ids ) < $limit ) {
-		$ids = array_merge( $ids, gpmi_get_post_ids( 'latest_fill', array(
-			'posts_per_page' => $limit - count( $ids ),
-			'post__not_in'   => $ids,
-		) ) );
-	}
-
-	return gpmi_query_from_ids( array_slice( array_values( array_unique( $ids ) ), 0, $limit ) );
+/**
+ * ID degli articoli del blocco di apertura.
+ *
+ * @param int $limit Numero di articoli.
+ * @return int[]
+ */
+function gpmi_featured_ids( $limit = 5 ) {
+	return gpmi_get_post_ids( 'featured', array( 'posts_per_page' => $limit ) );
 }
 
 /**
@@ -180,23 +170,77 @@ function gpmi_ticker_query( $limit = 6 ) {
 }
 
 /**
- * Ultimi articoli esclusi quelli gia' mostrati in evidenza.
+ * Numero di articoli per pagina della griglia, allineato alle colonne.
  *
- * @param int[] $exclude ID da escludere.
- * @param int   $limit   Numero di articoli.
- * @param int   $paged   Pagina corrente.
- * @return WP_Query
+ * Con dieci articoli su tre colonne l'ultima riga resta con due celle vuote.
+ * Si arrotonda per eccesso al multiplo delle colonne, cosi' la griglia chiude
+ * sempre piena.
+ *
+ * @return int
  */
-function gpmi_latest_query( array $exclude = array(), $limit = 10, $paged = 1 ) {
-	// La paginazione ha bisogno del conteggio totale: qui la cache non si applica.
-	return new WP_Query( array(
-		'post_type'           => 'post',
-		'post_status'         => 'publish',
-		'posts_per_page'      => $limit,
-		'paged'               => max( 1, (int) $paged ),
-		'post__not_in'        => $exclude,
-		'ignore_sticky_posts' => true,
+function gpmi_grid_per_page() {
+	$cols = max( 1, (int) gpmi_option( 'posts_columns' ) );
+	$base = max( 1, (int) get_option( 'posts_per_page' ) );
+
+	return (int) ceil( $base / $cols ) * $cols;
+}
+
+/**
+ * ID della griglia principale per la pagina richiesta.
+ *
+ * In prima pagina apre con gli articoli pinnati, poi prosegue per data. Gli
+ * articoli del blocco di apertura sono esclusi da ogni pagina, non solo dalla
+ * prima: escluderli solo in testa sfaserebbe la paginazione e li farebbe
+ * ricomparire piu' avanti.
+ *
+ * @param int[] $featured_ids ID gia' usati nel blocco di apertura.
+ * @param int   $paged        Pagina corrente.
+ * @param int   $max_pages    Valorizzato con il numero totale di pagine.
+ * @return int[]
+ */
+function gpmi_grid_page_ids( array $featured_ids, $paged, &$max_pages ) {
+	$per_page = gpmi_grid_per_page();
+	$paged    = max( 1, (int) $paged );
+
+	// Un pinnato che sia gia' fra gli ultimi pubblicati resta solo in apertura.
+	$sticky = array_values( array_diff( gpmi_sticky_ids( $per_page ), $featured_ids ) );
+	$sticky = array_slice( $sticky, 0, $per_page );
+
+	$exclude = array_merge( $featured_ids, $sticky );
+
+	// Quanti articoli "normali" restano da mostrare in prima pagina.
+	$first_page_rest = max( 0, $per_page - count( $sticky ) );
+
+	if ( 1 === $paged ) {
+		$offset = 0;
+		$limit  = $first_page_rest;
+	} else {
+		$offset = $first_page_rest + ( $paged - 2 ) * $per_page;
+		$limit  = $per_page;
+	}
+
+	$rest = array();
+	$total = 0;
+
+	// Con limit a zero la query si puo' saltare del tutto: servirebbe solo il conteggio.
+	$query = new WP_Query( array(
+		'post_type'              => 'post',
+		'post_status'            => 'publish',
+		'post__not_in'           => $exclude,
+		'posts_per_page'         => max( 1, $limit ),
+		'offset'                 => $offset,
+		'ignore_sticky_posts'    => true,
+		'fields'                 => 'ids',
+		'update_post_meta_cache' => false,
+		'update_post_term_cache' => false,
 	) );
+
+	$total = (int) $query->found_posts;
+	$rest  = $limit > 0 ? $query->posts : array();
+
+	$max_pages = 1 + (int) ceil( max( 0, $total - $first_page_rest ) / $per_page );
+
+	return 1 === $paged ? array_merge( $sticky, $rest ) : $rest;
 }
 
 /**

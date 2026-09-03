@@ -24,8 +24,11 @@ function gpmi_option_defaults() {
 		'topbar_date'       => true,
 		'ticker_label'      => __( 'FLASH', 'gpmi' ),
 		'ticker_enabled'    => true,
-		'featured_category' => '',
 		'footer_text'       => '',
+		'publisher_name'    => 'Associazione Il volo del Calabrone',
+		'publisher_city'    => 'Pavia',
+		'editor_name'       => 'Dario Vascellaro',
+		'registration'      => '',
 		'posts_columns'     => 3,
 		'author_box'        => true,
 	);
@@ -127,23 +130,6 @@ function gpmi_customize_register( $wp_customize ) {
 		'priority' => 27,
 	) );
 
-	$choices = array( '' => __( '— Ultimi articoli —', 'gpmi' ) );
-	foreach ( get_categories( array( 'hide_empty' => true, 'number' => 60 ) ) as $cat ) {
-		$choices[ $cat->slug ] = $cat->name;
-	}
-
-	$wp_customize->add_setting( 'gpmi_featured_category', array(
-		'default'           => '',
-		'sanitize_callback' => 'sanitize_key',
-	) );
-	$wp_customize->add_control( 'gpmi_featured_category', array(
-		'label'       => __( 'Categoria del blocco in evidenza', 'gpmi' ),
-		'description' => __( 'Se la categoria non ha abbastanza articoli, il blocco viene completato con i piu recenti.', 'gpmi' ),
-		'section'     => 'gpmi_home',
-		'type'        => 'select',
-		'choices'     => $choices,
-	) );
-
 	$wp_customize->add_setting( 'gpmi_posts_columns', array(
 		'default'           => 3,
 		'sanitize_callback' => 'absint',
@@ -165,6 +151,32 @@ function gpmi_customize_register( $wp_customize ) {
 		'section'     => 'gpmi_home',
 		'type'        => 'checkbox',
 	) );
+
+	// Dati legali della testata: compaiono nel footer e alimentano lo schema editore.
+	$wp_customize->add_section( 'gpmi_masthead', array(
+		'title'       => __( 'Dati legali della testata', 'gpmi' ),
+		'description' => __( 'Compaiono nel footer sotto il nome del giornale e nei dati strutturati letti dai motori di ricerca.', 'gpmi' ),
+		'priority'    => 28,
+	) );
+
+	$legal = array(
+		'publisher_name' => __( 'Editore', 'gpmi' ),
+		'publisher_city' => __( 'Sede', 'gpmi' ),
+		'editor_name'    => __( 'Direttore responsabile', 'gpmi' ),
+		'registration'   => __( 'Registrazione al Tribunale', 'gpmi' ),
+	);
+
+	foreach ( $legal as $key => $label ) {
+		$wp_customize->add_setting( 'gpmi_' . $key, array(
+			'default'           => gpmi_option_defaults()[ $key ],
+			'sanitize_callback' => 'sanitize_text_field',
+		) );
+		$wp_customize->add_control( 'gpmi_' . $key, array(
+			'label'   => $label,
+			'section' => 'gpmi_masthead',
+			'type'    => 'text',
+		) );
+	}
 
 	$wp_customize->add_setting( 'gpmi_footer_text', array(
 		'default'           => '',

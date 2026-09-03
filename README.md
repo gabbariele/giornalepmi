@@ -60,6 +60,29 @@ Queste cose vivevano nel tema o nei plugin precedenti e vanno ricollocate.
 4. **Widget**: la sidebar si chiama ora *Sidebar principale*, il footer ha
    quattro colonne.
 5. **Logo**: *Aspetto → Personalizza → Identità del sito*.
+6. **Dati legali** in *Personalizza → Dati legali della testata*: editore, sede
+   e direttore responsabile. Compaiono nel footer e nei dati strutturati come
+   `NewsMediaOrganization` ed `editor`.
+7. **Riquadro autore**: se un plugin ne aggiunge già uno, spegni quello del
+   tema in *Personalizza → Homepage* per non vederli doppi.
+
+## Come e' composta la homepage
+
+Due blocchi, senza sovrapposizioni:
+
+1. **Apertura** (1 grande + 4 medi): gli ultimi cinque articoli pubblicati.
+2. **Griglia** (3 colonne): prima gli articoli in evidenza, poi gli altri per
+   data. Gli articoli dell'apertura sono esclusi da **tutte** le pagine, non
+   solo dalla prima: escluderli solo in testa sfaserebbe la paginazione e li
+   farebbe ricomparire piu' avanti.
+
+Un articolo in evidenza che sia gia' fra gli ultimi cinque resta solo in
+apertura, senza comparire due volte.
+
+Il numero di articoli della griglia viene arrotondato per eccesso al multiplo
+delle colonne: con il valore predefinito di WordPress (10 articoli per pagina)
+e tre colonne diventa 12, cosi' l'ultima riga non resta con due celle vuote.
+Si regola da *Impostazioni - Lettura* e da *Personalizza - Homepage*.
 
 ## Struttura
 
@@ -127,6 +150,7 @@ consumata dai crawler principali. Il consenso effettivo passa dal `robots.txt`.
 | `gpmi_send_cache_headers` | `true` | header `Cache-Control` |
 | `gpmi_use_picture_element` | `true` | `<picture>` con AVIF/WebP |
 | `gpmi_query_cache_ttl` | 10 min | durata cache delle query di homepage |
+| `gpmi_fallback_menu_count` | 8 | categorie mostrate se manca il menu |
 | `gpmi_remove_global_styles` | `false` | vedi sotto |
 | `gpmi_remove_block_library` | `false` | rimuove il CSS dei blocchi |
 | `gpmi_show_preferred_source` | `true` | invito "fonte preferita su Google" |
