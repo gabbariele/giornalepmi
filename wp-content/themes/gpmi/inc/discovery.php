@@ -112,11 +112,12 @@ function gpmi_robots_txt( $output, $public ) {
 	}
 
 	/*
-	 * La sitemap e' il punto di ingresso preferito da ogni crawler. Il core la
-	 * dichiara gia' da solo, quindi si aggiunge solo quella di Yoast e solo se
-	 * non e' gia' presente: una direttiva Sitemap duplicata e' un errore.
+	 * La sitemap e' il punto di ingresso preferito da ogni crawler, ma
+	 * dichiararne una che risponde 404 e' peggio che non dichiararne nessuna.
+	 * Quella di Yoast si aggiunge solo se la funzione e' davvero attiva, e solo
+	 * se il core non l'ha gia' scritta: una direttiva duplicata e' un errore.
 	 */
-	if ( function_exists( 'YoastSEO' ) && false === strpos( $output, 'sitemap_index.xml' ) ) {
+	if ( gpmi_yoast_sitemap_enabled() && false === strpos( $output, 'sitemap_index.xml' ) ) {
 		$lines[] = 'Sitemap: ' . esc_url( home_url( '/sitemap_index.xml' ) );
 	}
 
@@ -128,6 +129,21 @@ function gpmi_robots_txt( $output, $public ) {
 add_filter( 'robots_txt', 'gpmi_robots_txt', 10, 2 );
 
 /**
+ * Indica se Yoast sta generando la propria sitemap XML.
+ *
+ * L'opzione puo' essere spenta, e in quel caso /sitemap_index.xml risponde 404.
+ *
+ * @return bool
+ */
+function gpmi_yoast_sitemap_enabled() {
+	if ( ! class_exists( 'WPSEO_Options' ) ) {
+		return false;
+	}
+
+	return (bool) WPSEO_Options::get( 'enable_xml_sitemap', false );
+}
+
+/**
  * Meta tag di dichiarazione d'uso per le IA.
  *
  * Non sono uno standard riconosciuto e nessun crawler noto li interpreta:
@@ -135,6 +151,12 @@ add_filter( 'robots_txt', 'gpmi_robots_txt', 10, 2 );
  * posizione dell'editore. Il consenso effettivo passa dal robots.txt.
  */
 function gpmi_ai_meta() {
+	/*
+	 * Se gli stessi meta arrivano gia' da un plugin che inietta codice nel
+	 * <head>, vanno tolti da una delle due parti: duplicarli non aggiunge
+	 * nulla e sporca il sorgente. Con un array vuoto il tema non ne stampa
+	 * nessuno e lascia fare al plugin.
+	 */
 	$tags = apply_filters( 'gpmi_ai_meta_tags', array(
 		'ai-train'        => 'allow',
 		'ai-access'       => 'index, summarize, reference',
