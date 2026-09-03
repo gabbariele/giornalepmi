@@ -31,6 +31,8 @@ function gpmi_option_defaults() {
 		'registration'      => '',
 		'posts_columns'     => 3,
 		'author_box'        => true,
+		'disable_comments'      => false,
+		'hide_existing_comments' => false,
 	);
 }
 
@@ -148,6 +150,28 @@ function gpmi_customize_register( $wp_customize ) {
 	$wp_customize->add_control( 'gpmi_author_box', array(
 		'label'       => __( 'Mostra il riquadro autore in fondo agli articoli', 'gpmi' ),
 		'description' => __( 'Disattivalo se un plugin ne aggiunge gia uno, per non vederli doppi.', 'gpmi' ),
+		'section'     => 'gpmi_home',
+		'type'        => 'checkbox',
+	) );
+
+	$wp_customize->add_setting( 'gpmi_disable_comments', array(
+		'default'           => false,
+		'sanitize_callback' => 'wp_validate_boolean',
+	) );
+	$wp_customize->add_control( 'gpmi_disable_comments', array(
+		'label'       => __( 'Chiudi i commenti su tutto il sito', 'gpmi' ),
+		'description' => __( 'Impedisce nuovi commenti ovunque. Quelli gia pubblicati restano leggibili.', 'gpmi' ),
+		'section'     => 'gpmi_home',
+		'type'        => 'checkbox',
+	) );
+
+	$wp_customize->add_setting( 'gpmi_hide_existing_comments', array(
+		'default'           => false,
+		'sanitize_callback' => 'wp_validate_boolean',
+	) );
+	$wp_customize->add_control( 'gpmi_hide_existing_comments', array(
+		'label'       => __( 'Nascondi anche i commenti gia pubblicati', 'gpmi' ),
+		'description' => __( 'Solo se i commenti sono chiusi. I dati restano nel database e ricompaiono togliendo la spunta.', 'gpmi' ),
 		'section'     => 'gpmi_home',
 		'type'        => 'checkbox',
 	) );

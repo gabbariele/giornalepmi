@@ -21,3 +21,4 @@ require GPMI_DIR . '/inc/nav-walker.php';
 require GPMI_DIR . '/inc/customizer.php';
 require GPMI_DIR . '/inc/discovery.php';
 require GPMI_DIR . '/inc/preferred-source.php';
+require GPMI_DIR . '/inc/comments.php';
