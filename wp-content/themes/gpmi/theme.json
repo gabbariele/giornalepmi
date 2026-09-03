@@ -1,0 +1,91 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"settings": {
+		"appearanceTools": false,
+		"useRootPaddingAwareAlignments": false,
+		"layout": {
+			"contentSize": "848px",
+			"wideSize": "1080px"
+		},
+		"color": {
+			"custom": true,
+			"customDuotone": false,
+			"customGradient": false,
+			"defaultDuotone": false,
+			"defaultGradients": false,
+			"defaultPalette": false,
+			"duotone": [],
+			"gradients": [],
+			"link": true,
+			"palette": [
+				{
+					"slug": "accent",
+					"name": "Rosso testata",
+					"color": "#ef4444"
+				},
+				{
+					"slug": "category",
+					"name": "Verde categoria",
+					"color": "#1b8415"
+				},
+				{
+					"slug": "ink",
+					"name": "Testo",
+					"color": "#16181d"
+				},
+				{
+					"slug": "surface",
+					"name": "Bianco",
+					"color": "#ffffff"
+				}
+			]
+		},
+		"typography": {
+			"customFontSize": true,
+			"defaultFontSizes": false,
+			"dropCap": false,
+			"fluid": false,
+			"lineHeight": true,
+			"fontSizes": []
+		},
+		"spacing": {
+			"customSpacingSize": true,
+			"defaultSpacingSizes": false,
+			"spacingSizes": [],
+			"units": [
+				"px",
+				"em",
+				"rem",
+				"%",
+				"vw"
+			]
+		},
+		"shadow": {
+			"defaultPresets": false,
+			"presets": []
+		},
+		"background": {
+			"backgroundImage": false
+		},
+		"dimensions": {
+			"aspectRatio": false,
+			"minHeight": false
+		},
+		"border": {
+			"color": true,
+			"radius": true,
+			"style": true,
+			"width": true
+		}
+	},
+	"styles": {
+		"elements": {
+			"link": {
+				"color": {
+					"text": "var(--gp-link)"
+				}
+			}
+		}
+	}
+}

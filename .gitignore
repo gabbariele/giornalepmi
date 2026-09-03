@@ -1,0 +1,10 @@
+# I font si scaricano con bin/fetch-fonts.php: non si versionano i binari.
+wp-content/themes/gpmi/assets/fonts/*.woff2
+wp-content/themes/gpmi/assets/fonts/*.woff
+
+# Varianti generate da bin/convert-images.php
+*.webp
+*.avif
+
+.DS_Store
+Thumbs.db
