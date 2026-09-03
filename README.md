@@ -100,7 +100,9 @@ wp-content/themes/gpmi/
     template-tags.php    icone SVG, metadati, breadcrumb, paginazione
     nav-walker.php       menu con sottomenu accessibili
     customizer.php       colori, ticker, opzioni di homepage
-    discovery.php        robots.txt, schema NewsArticle, llms.txt
+    discovery.php        robots.txt per i crawler IA, llms.txt
+    seo.php              meta, Open Graph, canonical, grafo JSON-LD
+    comments.php         chiusura dei commenti a livello di sito
     preferred-source.php fonte preferita su Google
   template-parts/        card degli articoli e ticker
   assets/js/app.js       menu, ricerca, ticker, navbar agganciata
@@ -127,10 +129,21 @@ add_filter( 'gpmi_ai_crawlers', function ( $bots ) {
 } );
 ```
 
-**2. Dati strutturati.** Lo schema di Yoast passa da `Article` a `NewsArticle` e
-viene completato con `articleSection`, `wordCount`, `inLanguage`,
-`isAccessibleForFree` e `speakable`. Se Yoast venisse disattivato, il tema
-emette uno schema di riserva completo.
+**2. Dati strutturati e SEO.** Il tema non dipende da nessun plugin SEO:
+`inc/seo.php` genera meta description, Open Graph, Twitter Card, canonical
+(anche sugli archivi paginati, dove il core non lo mette) e un grafo JSON-LD
+completo — `NewsMediaOrganization`, `WebSite` con `SearchAction`, `WebPage`,
+`BreadcrumbList` e `NewsArticle` con autore, sezioni, tag, immagine,
+`wordCount`, `speakable` e direttore responsabile.
+
+Le descrizioni scritte a mano in Yoast restano nel database anche dopo la
+disinstallazione: il tema le riusa come prima sorgente (`_yoast_wpseo_metadesc`,
+`_yoast_wpseo_title`, `_yoast_wpseo_primary_category`), così anni di lavoro
+editoriale non vanno persi.
+
+Se un plugin SEO viene installato (Yoast, Rank Math, AIOSEO, SEOPress) il
+modulo si spegne da solo per non duplicare nulla; con Yoast attivo il tema si
+limita a portarne lo schema da `Article` a `NewsArticle`.
 
 **3. `ai-*` e `llms.txt`.** Da sapere: **i meta tag `ai-train`, `ai-access`,
 `ai-summary`, `ai-metadata`, `ai-purpose`, `ai-distribution` non sono uno
@@ -154,6 +167,7 @@ consumata dai crawler principali. Il consenso effettivo passa dal `robots.txt`.
 | `gpmi_remove_global_styles` | `false` | vedi sotto |
 | `gpmi_remove_block_library` | `false` | rimuove il CSS dei blocchi |
 | `gpmi_show_preferred_source` | `true` | invito "fonte preferita su Google" |
+| `gpmi_seo_enabled` | `true` se non c'è un plugin SEO | meta, canonical e JSON-LD del tema |
 
 ### I 12 KB di `global-styles`
 
@@ -169,6 +183,16 @@ add_filter( 'gpmi_remove_global_styles', '__return_true' );
 Non è attivo di default perché l'archivio ha 11.500 articoli: se anche solo
 alcuni usano blocchi con colori preimpostati, quei colori sparirebbero. Vale la
 pena provarlo su un paio di articoli vecchi prima di attivarlo ovunque.
+
+## Personalizzazioni CSS utili
+
+L'altezza minima degli iframe nei widget (modulo newsletter) si regola con una
+variabile, senza toccare il foglio di stile — da *Aspetto → Personalizza → CSS
+aggiuntivo*:
+
+```css
+:root { --gp-widget-iframe-height: 560px; }
+```
 
 ## Note operative
 

@@ -263,63 +263,6 @@ function gpmi_plain_text( $text, $limit = 0 ) {
 	return $text;
 }
 
-/**
- * Dati strutturati di riserva, usati solo se Yoast non e' attivo.
- *
- * Evita di ritrovarsi senza schema se il plugin viene disattivato.
- */
-function gpmi_fallback_schema() {
-	if ( function_exists( 'YoastSEO' ) || ! is_singular( 'post' ) ) {
-		return;
-	}
-
-	$post_id = get_the_ID();
-	$image   = get_the_post_thumbnail_url( $post_id, 'gpmi-single' );
-
-	/*
-	 * wp_head viene eseguito prima del Loop, quindi get_the_author() qui
-	 * restituirebbe una stringa vuota: l'autore va letto dal post.
-	 */
-	$author_id = (int) get_post_field( 'post_author', $post_id );
-
-	$schema = array(
-		'@context'            => 'https://schema.org',
-		'@type'               => 'NewsArticle',
-		'headline'            => gpmi_plain_text( get_the_title( $post_id ), 110 ),
-		'description'         => gpmi_plain_text( get_the_excerpt( $post_id ) ),
-		'datePublished'       => get_the_date( DATE_W3C, $post_id ),
-		'dateModified'        => get_the_modified_date( DATE_W3C, $post_id ),
-		'inLanguage'          => get_bloginfo( 'language' ),
-		'isAccessibleForFree' => true,
-		'wordCount'           => gpmi_word_count( $post_id ),
-		'mainEntityOfPage'    => array(
-			'@type' => 'WebPage',
-			'@id'   => get_permalink( $post_id ),
-		),
-		'author'              => array(
-			'@type' => 'Person',
-			'name'  => get_the_author_meta( 'display_name', $author_id ),
-			'url'   => get_author_posts_url( $author_id ),
-		),
-		'publisher'           => gpmi_publisher_schema(),
-		'articleSection'      => array_values( wp_get_post_categories( $post_id, array( 'fields' => 'names' ) ) ),
-	);
-
-	if ( $image ) {
-		$schema['image'] = $image;
-	}
-
-	$editor = gpmi_option( 'editor_name' );
-	if ( $editor ) {
-		$schema['editor'] = array( '@type' => 'Person', 'name' => $editor );
-	}
-
-	printf(
-		'<script type="application/ld+json">%s</script>' . "\n",
-		wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE )
-	);
-}
-add_action( 'wp_head', 'gpmi_fallback_schema', 20 );
 
 /**
  * Registra la rotta /llms.txt.

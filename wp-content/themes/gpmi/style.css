@@ -1508,6 +1508,27 @@ select {
 	border-radius: 3px;
 }
 
+/*
+ * Gli iframe nei widget (modulo newsletter) arrivano con un'altezza fissa
+ * pensata per un'altra larghezza e finiscono tagliati o con lo scroll interno.
+ * Qui prendono tutta la larghezza della colonna e un'altezza minima
+ * regolabile: per cambiarla basta ridefinire --gp-widget-iframe-height.
+ */
+.widget iframe,
+.footer-col iframe {
+	width: 100%;
+	min-height: var(--gp-widget-iframe-height, 460px);
+	border: 0;
+	display: block;
+}
+
+/* Su schermi bassi un iframe alto occuperebbe l'intera finestra. */
+@media (height < 700px) {
+	.widget iframe {
+		min-height: var(--gp-widget-iframe-height-short, 380px);
+	}
+}
+
 /* -------------------------------------------------------------------------
    14. Footer
    ---------------------------------------------------------------------- */
