@@ -49,7 +49,16 @@ $overlay = in_array( $variant, array( 'hero', 'tile' ), true );
 
 	<div class="card-body">
 
-		<?php gpmi_category_badge(); ?>
+		<div class="card-badges">
+			<?php gpmi_category_badge(); ?>
+
+			<?php if ( is_sticky() ) : ?>
+				<span class="pin-badge">
+					<?php echo gpmi_icon( 'bolt', 11 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<?php esc_html_e( 'In evidenza', 'gpmi' ); ?>
+				</span>
+			<?php endif; ?>
+		</div>
 
 		<h3 class="card-title">
 			<a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>

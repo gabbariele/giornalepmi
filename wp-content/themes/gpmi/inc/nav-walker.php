@@ -97,3 +97,39 @@ class GPMI_Nav_Walker extends Walker_Nav_Menu {
 		$output .= "</li>\n";
 	}
 }
+
+/**
+ * Menu di ripiego quando nessun menu e' assegnato alla posizione principale.
+ *
+ * Passando da un tema all'altro le posizioni dei menu si azzerano: senza
+ * questo ripiego la barra di navigazione resterebbe vuota finche' qualcuno non
+ * riassegna il menu in Aspetto - Menu. Qui mostra invece le categorie con piu'
+ * articoli, cosi' il giornale resta navigabile da subito.
+ */
+function gpmi_menu_fallback() {
+	$categories = get_categories( array(
+		'orderby'    => 'count',
+		'order'      => 'DESC',
+		'number'     => (int) apply_filters( 'gpmi_fallback_menu_count', 8 ),
+		'hide_empty' => true,
+	) );
+
+	if ( ! $categories ) {
+		return;
+	}
+
+	$current = is_category() ? (int) get_queried_object_id() : 0;
+
+	echo '<ul id="primary-menu" class="primary-menu">';
+
+	foreach ( $categories as $cat ) {
+		printf(
+			'<li class="menu-item%1$s"><a href="%2$s">%3$s</a></li>',
+			$cat->term_id === $current ? ' current-menu-item' : '',
+			esc_url( get_category_link( $cat ) ),
+			esc_html( $cat->name )
+		);
+	}
+
+	echo '</ul>';
+}

@@ -27,6 +27,7 @@ function gpmi_option_defaults() {
 		'featured_category' => '',
 		'footer_text'       => '',
 		'posts_columns'     => 3,
+		'author_box'        => true,
 	);
 }
 
@@ -152,6 +153,17 @@ function gpmi_customize_register( $wp_customize ) {
 		'section' => 'gpmi_home',
 		'type'    => 'select',
 		'choices' => array( 2 => '2', 3 => '3', 4 => '4' ),
+	) );
+
+	$wp_customize->add_setting( 'gpmi_author_box', array(
+		'default'           => true,
+		'sanitize_callback' => 'wp_validate_boolean',
+	) );
+	$wp_customize->add_control( 'gpmi_author_box', array(
+		'label'       => __( 'Mostra il riquadro autore in fondo agli articoli', 'gpmi' ),
+		'description' => __( 'Disattivalo se un plugin ne aggiunge gia uno, per non vederli doppi.', 'gpmi' ),
+		'section'     => 'gpmi_home',
+		'type'        => 'checkbox',
 	) );
 
 	$wp_customize->add_setting( 'gpmi_footer_text', array(

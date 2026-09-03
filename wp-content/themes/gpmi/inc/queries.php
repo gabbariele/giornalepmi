@@ -81,6 +81,8 @@ function gpmi_flush_query_cache() {
 	update_option( 'gpmi_cache_keys', array(), false );
 }
 add_action( 'save_post_post', 'gpmi_flush_query_cache' );
+// Mettere o togliere il pin non passa sempre da un salvataggio dell'articolo.
+add_action( 'update_option_sticky_posts', 'gpmi_flush_query_cache' );
 add_action( 'deleted_post', 'gpmi_flush_query_cache' );
 add_action( 'switch_theme', 'gpmi_flush_query_cache' );
 
@@ -112,25 +114,58 @@ function gpmi_query_from_ids( array $ids ) {
  * @return WP_Query
  */
 function gpmi_featured_query( $limit = 5 ) {
+	/*
+	 * Gli articoli che la redazione mette "in cima alla pagina principale"
+	 * vengono prima di tutto il resto: e' il modo con cui WordPress esprime
+	 * una scelta editoriale, e va rispettato.
+	 */
+	$ids = gpmi_sticky_ids( $limit );
+
+	// Poi la categoria in evidenza, se ne e' stata scelta una.
 	$featured_cat = gpmi_option( 'featured_category', '' );
 
-	$args = array( 'posts_per_page' => $limit );
-	if ( $featured_cat ) {
-		$args['category_name'] = $featured_cat;
-	}
-
-	$ids = gpmi_get_post_ids( 'featured', $args );
-
-	// Se la categoria in evidenza non ha abbastanza articoli, completa con i piu' recenti.
-	if ( count( $ids ) < $limit ) {
-		$fill = gpmi_get_post_ids( 'latest_fill', array(
-			'posts_per_page' => $limit,
+	if ( $featured_cat && count( $ids ) < $limit ) {
+		$ids = array_merge( $ids, gpmi_get_post_ids( 'featured', array(
+			'posts_per_page' => $limit - count( $ids ),
+			'category_name'  => $featured_cat,
 			'post__not_in'   => $ids,
-		) );
-		$ids = array_slice( array_merge( $ids, $fill ), 0, $limit );
+		) ) );
 	}
 
-	return gpmi_query_from_ids( $ids );
+	// Infine i piu' recenti, per completare la griglia.
+	if ( count( $ids ) < $limit ) {
+		$ids = array_merge( $ids, gpmi_get_post_ids( 'latest_fill', array(
+			'posts_per_page' => $limit - count( $ids ),
+			'post__not_in'   => $ids,
+		) ) );
+	}
+
+	return gpmi_query_from_ids( array_slice( array_values( array_unique( $ids ) ), 0, $limit ) );
+}
+
+/**
+ * ID degli articoli in evidenza, dal piu' recente.
+ *
+ * get_option( 'sticky_posts' ) conserva anche gli ID di articoli poi cancellati
+ * o rimessi in bozza: passarli da WP_Query li filtra, altrimenti la griglia
+ * della homepage resterebbe con dei buchi.
+ *
+ * @param int $limit Numero massimo di articoli.
+ * @return int[]
+ */
+function gpmi_sticky_ids( $limit = 5 ) {
+	$sticky = get_option( 'sticky_posts' );
+
+	if ( empty( $sticky ) || ! is_array( $sticky ) ) {
+		return array();
+	}
+
+	return gpmi_get_post_ids( 'sticky', array(
+		'post__in'       => array_map( 'absint', $sticky ),
+		'posts_per_page' => $limit,
+		'orderby'        => 'date',
+		'order'          => 'DESC',
+	) );
 }
 
 /**

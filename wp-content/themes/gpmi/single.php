@@ -31,10 +31,16 @@ get_header();
 					<figure class="entry-media">
 						<?php gpmi_post_thumbnail( get_post(), 'gpmi-single', '(max-width: 900px) 100vw, 848px', true ); ?>
 						<?php
+						/*
+						 * Le didascalie degli allegati contengono spesso il credito
+						 * fotografico come link ("Immagine di X su Y"): vanno filtrate
+						 * con wp_kses_post, non con esc_html, altrimenti il lettore
+						 * vede il tag <a> stampato come testo.
+						 */
 						$caption = wp_get_attachment_caption( get_post_thumbnail_id() );
 						if ( $caption ) :
 							?>
-							<figcaption><?php echo esc_html( $caption ); ?></figcaption>
+							<figcaption><?php echo wp_kses_post( $caption ); ?></figcaption>
 						<?php endif; ?>
 					</figure>
 				<?php endif; ?>
@@ -58,7 +64,12 @@ get_header();
 				?>
 
 				<?php
-				$author_bio = get_the_author_meta( 'description' );
+				/*
+				 * Diversi plugin aggiungono un proprio riquadro autore in coda
+				 * all'articolo. Se ne usi uno, disattiva questo dal Customizer
+				 * per non vederli entrambi.
+				 */
+				$author_bio = gpmi_option( 'author_box' ) ? get_the_author_meta( 'description' ) : '';
 				if ( $author_bio ) :
 					?>
 					<aside class="author-box">

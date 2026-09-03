@@ -88,7 +88,7 @@ defined( 'ABSPATH' ) || exit;
 						'menu_class'     => 'primary-menu',
 						'container'      => false,
 						'walker'         => new GPMI_Nav_Walker(),
-						'fallback_cb'    => false,
+						'fallback_cb'    => 'gpmi_menu_fallback',
 					) );
 					?>
 				</nav>
