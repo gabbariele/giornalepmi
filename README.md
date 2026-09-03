@@ -217,11 +217,26 @@ viene mai chiamato: nessuna direttiva del tema raggiunge i crawler. Il primo
 parametro di `try_files` e' pero' `$uri`, quindi basta che il file esista.
 
 ```bash
-php bin/write-robots.php --apply
+cd /var/www/giornaledellepmi.it/htdocs
+php /percorso/del/repo/bin/write-robots.php            # mostra, non scrive
+php /percorso/del/repo/bin/write-robots.php --apply    # scrive
 ```
 
 Scrive in `htdocs/robots.txt` esattamente cio' che WordPress genererebbe, filtri
-del tema compresi. Va rilanciato dopo ogni modifica a `gpmi_ai_crawlers`.
+del tema compresi, dopo aver messo da parte una copia dell'eventuale versione
+precedente. Va rilanciato dopo ogni modifica a `gpmi_ai_crawlers`.
+
+Lo script individua l'installazione dalla cartella corrente e stampa sempre
+nome e indirizzo del sito prima di scrivere: su un server con piu' siti e' la
+verifica che impedisce di agire sulla docroot sbagliata. Se non trova nulla si
+ferma invece di indovinare; la docroot si puo' anche indicare a mano:
+
+```bash
+php bin/write-robots.php --wp=/var/www/altrosito.it/htdocs --apply
+```
+
+Per tornare indietro basta cancellare il file: nginx riprende a servire il
+proprio fallback, esattamente come prima.
 
 Quel file di configurazione e' condiviso da tutti i siti del server e viene
 sovrascritto dagli aggiornamenti di WordOps: meglio non modificarlo.

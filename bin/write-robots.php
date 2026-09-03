@@ -32,21 +32,61 @@ if ( PHP_SAPI !== 'cli' ) {
 	exit( "Eseguire da riga di comando.\n" );
 }
 
-$options = getopt( '', array( 'apply', 'path::' ) );
+$options = getopt( '', array( 'apply', 'path::', 'wp::' ) );
 $apply   = isset( $options['apply'] );
+
+/*
+ * Individuazione dell'installazione su cui agire.
+ *
+ * Su un server con piu' siti, sbagliare cartella significherebbe scrivere il
+ * robots.txt del sito sbagliato. Si cerca quindi in ordine dichiarato, si
+ * pretende anche wp-config.php (una docroot senza non e' un'installazione), e
+ * prima di scrivere si stampa sempre di quale sito si tratta.
+ */
+$roots = array();
+
+if ( isset( $options['wp'] ) ) {
+	$roots[] = rtrim( $options['wp'], "/\\" );
+}
+
+// Cartella corrente e livelli superiori: il caso normale e' lanciare lo
+// script stando dentro la docroot del sito.
+$dir = getcwd();
+for ( $i = 0; $i < 4 && $dir; $i++ ) {
+	$roots[] = $dir;
+	$parent  = dirname( $dir );
+	if ( $parent === $dir ) {
+		break;
+	}
+	$dir = $parent;
+}
+
+// Infine il caso in cui lo script viva dentro l'installazione stessa.
+$dir = __DIR__;
+for ( $i = 0; $i < 4 && $dir; $i++ ) {
+	$roots[] = $dir;
+	$parent  = dirname( $dir );
+	if ( $parent === $dir ) {
+		break;
+	}
+	$dir = $parent;
+}
 
 $loaded = false;
 
-foreach ( array( 'wp-load.php', '../wp-load.php', '../../wp-load.php' ) as $candidate ) {
-	if ( file_exists( __DIR__ . '/' . $candidate ) ) {
-		require_once __DIR__ . '/' . $candidate;
+foreach ( array_unique( $roots ) as $root ) {
+	if ( file_exists( $root . '/wp-load.php' ) && file_exists( $root . '/wp-config.php' ) ) {
+		require_once $root . '/wp-load.php';
 		$loaded = true;
 		break;
 	}
 }
 
 if ( ! $loaded ) {
-	exit( "wp-load.php non trovato: eseguire lo script dentro l'installazione WordPress.\n" );
+	echo "Installazione WordPress non trovata.\n";
+	echo "Lanciare lo script dalla docroot del sito, oppure indicarla:\n";
+	echo "  php write-robots.php --wp=/var/www/esempio.it/htdocs --apply\n";
+	exit( 1 );
 }
 
 $target = isset( $options['path'] ) ? $options['path'] : ABSPATH . 'robots.txt';
@@ -61,6 +101,9 @@ $content = trim( $content ) . "\n";
 
 $agents = substr_count( $content, 'User-agent:' );
 
+// Si stampa sempre quale sito e' stato caricato: su un server condiviso e' la
+// verifica che impedisce di scrivere nella docroot sbagliata.
+echo "Sito:         " . get_bloginfo( 'name' ) . ' (' . home_url( '/' ) . ")\n";
 echo "Destinazione: {$target}\n";
 echo "Direttive User-agent generate: {$agents}\n\n";
 
