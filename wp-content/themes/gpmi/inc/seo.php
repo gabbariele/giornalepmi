@@ -239,7 +239,13 @@ function gpmi_current_url() {
 		return get_author_posts_url( (int) get_queried_object_id() );
 	}
 
-	return home_url( add_query_arg( array(), $GLOBALS['wp']->request ? $GLOBALS['wp']->request . '/' : '/' ) );
+	/*
+	 * Ultimo caso: si usa solo il percorso gia' risolto da WordPress, mai
+	 * REQUEST_URI grezzo, che e' sotto il controllo di chi fa la richiesta.
+	 */
+	$request = isset( $GLOBALS['wp']->request ) ? (string) $GLOBALS['wp']->request : '';
+
+	return $request ? home_url( user_trailingslashit( $request ) ) : home_url( '/' );
 }
 
 /**
@@ -336,7 +342,15 @@ function gpmi_schema_graph() {
 				'@context' => 'https://schema.org',
 				'@graph'   => array_values( $graph ),
 			),
-			JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+			/*
+			 * JSON_HEX_TAG trasforma < e > in < e >. Senza, un titolo
+			 * o un nome di categoria contenente </script> chiuderebbe il blocco
+			 * in anticipo e tutto cio' che segue verrebbe eseguito come HTML.
+			 * I consumatori di JSON-LD decodificano le sequenze senza problemi,
+			 * quindi non si perde nulla e la classe di attacco sparisce a monte,
+			 * indipendentemente da cosa finisce nei valori.
+			 */
+			JSON_HEX_TAG | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 		)
 	);
 }

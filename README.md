@@ -245,6 +245,43 @@ La CDN tiene `robots.txt` in cache per ore (`max-age=14400` su Cloudflare):
 dopo la scrittura va purgato quell'URL, altrimenti si continua a vedere la
 versione vecchia.
 
+## Sicurezza
+
+Verifiche fatte sul tema, con i relativi esiti.
+
+Il tema non legge nessuna variabile di richiesta (`$_GET`, `$_POST`,
+`$_REQUEST`, `$_SERVER`), non esegue query SQL, non usa `eval` ne' funzioni di
+esecuzione di comandi, non scrive file a runtime e non espone endpoint AJAX o
+form di amministrazione: non c'e' superficie per SQL injection, per
+manipolazione di parametri o per azioni senza nonce. Tutti i file PHP terminano
+l'esecuzione se caricati direttamente. Tutte le opzioni del Customizer hanno un
+`sanitize_callback`.
+
+Due correzioni fatte in seguito alla revisione:
+
+**Uscita dal blocco JSON-LD.** I dati strutturati erano generati con
+`JSON_UNESCAPED_SLASHES`: un titolo o un nome di categoria contenente
+`</script>` avrebbe chiuso il blocco in anticipo, facendo interpretare come
+HTML tutto cio' che seguiva. Aggiunto `JSON_HEX_TAG`, che trasforma `<` e `>`
+in `<` e `>`: i consumatori di JSON-LD decodificano le sequenze
+senza problemi e la classe di attacco sparisce a prescindere dai contenuti.
+
+**Contenuti riservati in cache condivisa.** Gli header `Cache-Control: public,
+s-maxage` venivano inviati anche sui contenuti protetti da password. Una volta
+inserita la password, lo stesso indirizzo restituisce il testo in chiaro, e un
+proxy avrebbe potuto conservarlo e servirlo a chiunque. Ora le risposte
+personali — utente collegato, contenuto protetto da password, presenza di
+cookie di sessione, di password o di commento — ricevono
+`Cache-Control: private, no-cache, no-store`.
+
+Un punto che **non** e' un difetto del tema: `the_title()` stampa il titolo
+senza escaping, quindi un titolo che contenesse HTML finirebbe nel markup. E'
+il comportamento previsto da WordPress (i titoli possono contenere corsivi e
+grassetti) e la protezione sta a monte, in `kses` al salvataggio, per chiunque
+non abbia la capacita' `unfiltered_html`. Applicare `esc_html()` romperebbe la
+formattazione legittima dei titoli senza aggiungere sicurezza reale: chi ha
+`unfiltered_html` e' un amministratore e puo' gia' modificare i file del tema.
+
 ## Note operative
 
 - **Prerender.** Le Speculation Rules precaricano il link sotto il cursore. Dopo

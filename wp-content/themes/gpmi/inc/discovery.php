@@ -323,7 +323,7 @@ function gpmi_llms_output() {
 		foreach ( $categories as $cat ) {
 			$lines[] = sprintf(
 				'- [%s](%s): %d articoli%s',
-				$cat->name,
+				wp_strip_all_tags( $cat->name ),
 				get_category_link( $cat ),
 				$cat->count,
 				$cat->description ? ' — ' . wp_strip_all_tags( $cat->description ) : ''

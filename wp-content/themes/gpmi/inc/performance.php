@@ -147,10 +147,25 @@ add_action( 'wp_footer', 'gpmi_speculation_rules' );
  * utenti loggati e le pagine dinamiche la cache resta disattivata.
  */
 function gpmi_cache_headers() {
-	if ( is_user_logged_in() || is_admin() || is_preview() || is_404() || is_search() ) {
+	if ( ! apply_filters( 'gpmi_send_cache_headers', true ) ) {
 		return;
 	}
-	if ( ! apply_filters( 'gpmi_send_cache_headers', true ) ) {
+
+	/*
+	 * Risposte che non devono finire in una cache condivisa.
+	 *
+	 * Il caso critico e' il contenuto protetto da password: dopo che il lettore
+	 * inserisce la password, lo stesso indirizzo restituisce il testo in
+	 * chiaro. Con header pubblici un proxy potrebbe conservarlo e servirlo a
+	 * chiunque. Qui si dichiara esplicitamente "private, no-store" invece di
+	 * limitarsi a non dire nulla: un header assente lascia decidere alla cache.
+	 */
+	if ( gpmi_response_is_private() ) {
+		header( 'Cache-Control: private, no-cache, no-store, max-age=0' );
+		return;
+	}
+
+	if ( is_admin() || is_preview() || is_404() || is_search() ) {
 		return;
 	}
 
@@ -171,3 +186,40 @@ function gpmi_cache_headers() {
 	}
 }
 add_action( 'template_redirect', 'gpmi_cache_headers' );
+
+/**
+ * Indica se la risposta corrente contiene qualcosa di personale o riservato.
+ *
+ * @return bool
+ */
+function gpmi_response_is_private() {
+	if ( is_user_logged_in() || is_customize_preview() ) {
+		return true;
+	}
+
+	// Contenuti protetti da password, sia bloccati sia gia' sbloccati.
+	if ( is_singular() ) {
+		$post = get_queried_object();
+
+		if ( $post instanceof WP_Post && '' !== $post->post_password ) {
+			return true;
+		}
+	}
+
+	/*
+	 * Presenza di cookie che identificano la persona: sessione, password di un
+	 * contenuto protetto, dati lasciati commentando. Se c'e' uno di questi la
+	 * risposta e' personalizzata e non va condivisa.
+	 */
+	foreach ( array_keys( (array) $_COOKIE ) as $name ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- lettura dei soli nomi, nessun dato usato.
+		$name = (string) $name;
+
+		if ( 0 === strpos( $name, 'wordpress_logged_in' )
+			|| 0 === strpos( $name, 'wp-postpass' )
+			|| 0 === strpos( $name, 'comment_author' ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}

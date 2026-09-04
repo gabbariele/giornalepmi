@@ -235,10 +235,20 @@ function gpmi_custom_properties() {
 
 	$css = '';
 	foreach ( $vars as $name => $value ) {
-		if ( ! $value ) {
+		/*
+		 * I valori sono gia' validati in salvataggio da sanitize_hex_color, ma
+		 * un theme mod puo' essere scritto anche da codice: dentro un blocco
+		 * <style> l'escaping HTML non basta, perche' un ; o una } aprirebbero
+		 * altre regole. Si rivalida qui la forma esadecimale e si scarta tutto
+		 * il resto.
+		 */
+		$color = sanitize_hex_color( $value );
+
+		if ( ! $color ) {
 			continue;
 		}
-		$css .= $name . ':' . esc_attr( $value ) . ';';
+
+		$css .= $name . ':' . $color . ';';
 	}
 
 	if ( ! $css ) {
