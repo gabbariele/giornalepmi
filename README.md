@@ -65,6 +65,10 @@ Queste cose vivevano nel tema o nei plugin precedenti e vanno ricollocate.
    `NewsMediaOrganization` ed `editor`.
 7. **Riquadro autore**: se un plugin ne aggiunge già uno, spegni quello del
    tema in *Personalizza → Homepage* per non vederli doppi.
+8. **Foto degli autori**: si caricano dal profilo utente (*Utenti → Modifica →
+   Foto*). Senza foto WordPress ricade su Gravatar, che mostra qualcosa solo a
+   chi ha un account collegato a quell'indirizzo. Le foto caricate in passato
+   con un plugin poi disattivato vengono ritrovate da sole nel database.
 
 ## Come e' composta la homepage
 
@@ -103,6 +107,7 @@ wp-content/themes/gpmi/
     discovery.php        robots.txt per i crawler IA, llms.txt
     seo.php              meta, Open Graph, canonical, grafo JSON-LD
     comments.php         chiusura dei commenti a livello di sito
+    avatars.php          foto degli autori caricate dalla libreria media
     preferred-source.php fonte preferita su Google
   template-parts/        card degli articoli e ticker
   assets/js/app.js       menu, ricerca, ticker, navbar agganciata
@@ -244,6 +249,17 @@ sovrascritto dagli aggiornamenti di WordOps: meglio non modificarlo.
 La CDN tiene `robots.txt` in cache per ore (`max-age=14400` su Cloudflare):
 dopo la scrittura va purgato quell'URL, altrimenti si continua a vedere la
 versione vecchia.
+
+## Versioni
+
+Il numero di versione sta in `style.css` (intestazione `Version:`) e nella
+costante `GPMI_VERSION` di `functions.php`: vanno tenuti allineati. Le modifiche
+sono elencate in [CHANGELOG.md](CHANGELOG.md) e ogni versione ha un tag git, per
+poter tornare indietro:
+
+```bash
+git checkout v1.0.0 -- wp-content/themes/gpmi
+```
 
 ## Sicurezza
 

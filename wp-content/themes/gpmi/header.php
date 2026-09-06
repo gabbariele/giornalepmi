@@ -29,9 +29,7 @@ defined( 'ABSPATH' ) || exit;
 				<div class="container topbar-inner">
 					<?php if ( gpmi_option( 'topbar_date' ) ) : ?>
 						<p class="topbar-date">
-							<?php
-							echo esc_html( wp_date( 'l, j F Y' ) );
-							?>
+							<?php echo esc_html( gpmi_long_date() ); ?>
 							<span class="topbar-clock" data-clock hidden></span>
 						</p>
 					<?php endif; ?>

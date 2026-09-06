@@ -342,3 +342,28 @@ function gpmi_masthead_legal() {
 
 	echo '</div>';
 }
+
+/**
+ * Data estesa per la barra superiore, con le maiuscole giuste per l'italiano.
+ *
+ * La traduzione italiana di WordPress restituisce il mese con l'iniziale
+ * maiuscola ("lunedi', 7 Settembre 2026"), che in italiano e' un errore: i nomi
+ * di giorni e mesi sono nomi comuni e vanno minuscoli. Non e' un problema di
+ * CSS, perche' la stringa arriva gia' cosi' dal core.
+ *
+ * Resta maiuscola la sola iniziale della riga, che apre come una frase.
+ *
+ * @return string
+ */
+function gpmi_long_date() {
+	$date = wp_date( 'l, j F Y' );
+
+	// Vale per l'italiano: in inglese i nomi dei mesi sono nomi propri.
+	if ( 0 !== strpos( get_locale(), 'it' ) ) {
+		return $date;
+	}
+
+	$date = mb_strtolower( $date, 'UTF-8' );
+
+	return mb_strtoupper( mb_substr( $date, 0, 1, 'UTF-8' ), 'UTF-8' ) . mb_substr( $date, 1, null, 'UTF-8' );
+}

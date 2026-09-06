@@ -7,7 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'GPMI_VERSION', '1.0.0' );
+define( 'GPMI_VERSION', '1.1.0' );
 define( 'GPMI_DIR', get_template_directory() );
 define( 'GPMI_URI', get_template_directory_uri() );
 
@@ -23,3 +23,4 @@ require GPMI_DIR . '/inc/discovery.php';
 require GPMI_DIR . '/inc/seo.php';
 require GPMI_DIR . '/inc/preferred-source.php';
 require GPMI_DIR . '/inc/comments.php';
+require GPMI_DIR . '/inc/avatars.php';

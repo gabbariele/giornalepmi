@@ -438,12 +438,7 @@ function gpmi_article_schema( $url, $site_id, $org_id ) {
 		'isAccessibleForFree' => true,
 		'wordCount'           => gpmi_word_count( $post_id ),
 		'publisher'           => array( '@id' => $org_id ),
-		'author'              => array(
-			'@type' => 'Person',
-			'@id'   => get_author_posts_url( $author_id ) . '#person',
-			'name'  => get_the_author_meta( 'display_name', $author_id ),
-			'url'   => get_author_posts_url( $author_id ),
-		),
+		'author'              => gpmi_author_schema( $author_id ),
 		'speakable'           => array(
 			'@type'       => 'SpeakableSpecification',
 			'cssSelector' => array( '.entry-title', '.entry-content > p:first-of-type' ),
@@ -481,4 +476,40 @@ function gpmi_article_schema( $url, $site_id, $org_id ) {
 	}
 
 	return $article;
+}
+
+/**
+ * Nodo Person dell'autore.
+ *
+ * Foto e biografia sono i due elementi da cui i motori riconoscono una firma
+ * reale dietro a un articolo.
+ *
+ * @param int $author_id Utente autore.
+ * @return array
+ */
+function gpmi_author_schema( $author_id ) {
+	$person = array(
+		'@type' => 'Person',
+		'@id'   => get_author_posts_url( $author_id ) . '#person',
+		'name'  => get_the_author_meta( 'display_name', $author_id ),
+		'url'   => get_author_posts_url( $author_id ),
+	);
+
+	$bio = get_the_author_meta( 'description', $author_id );
+	if ( $bio ) {
+		$person['description'] = gpmi_plain_text( $bio, 300 );
+	}
+
+	if ( function_exists( 'gpmi_avatar_id' ) ) {
+		$photo = gpmi_avatar_id( $author_id );
+
+		if ( $photo ) {
+			$url = wp_get_attachment_image_url( $photo, 'medium' );
+			if ( $url ) {
+				$person['image'] = $url;
+			}
+		}
+	}
+
+	return $person;
 }
