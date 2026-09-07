@@ -7,7 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'GPMI_VERSION', '1.1.0' );
+define( 'GPMI_VERSION', '1.1.1' );
 define( 'GPMI_DIR', get_template_directory() );
 define( 'GPMI_URI', get_template_directory_uri() );
 

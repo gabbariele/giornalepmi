@@ -180,17 +180,24 @@ function gpmi_resolve_user_id( $id_or_email ) {
 }
 
 /**
- * Campo "Foto" nel profilo utente.
+ * Campo "Foto" nelle schermate di profilo.
  *
- * @param WP_User $user Utente in modifica.
+ * @param WP_User|string $context Utente in modifica, oppure il contesto della
+ *                                schermata di creazione.
  */
-function gpmi_avatar_field( $user ) {
-	if ( ! current_user_can( 'edit_user', $user->ID ) ) {
+function gpmi_avatar_field( $context = null ) {
+	$user_id = ( $context instanceof WP_User ) ? (int) $context->ID : 0;
+
+	// In creazione non esiste ancora un utente: si mostra il campo vuoto.
+	if ( $user_id && ! current_user_can( 'edit_user', $user_id ) ) {
+		return;
+	}
+	if ( ! $user_id && ! current_user_can( 'create_users' ) ) {
 		return;
 	}
 
-	$attachment_id = (int) get_user_meta( $user->ID, GPMI_AVATAR_META, true );
-	$inherited     = gpmi_avatar_id( $user->ID );
+	$attachment_id = $user_id ? (int) get_user_meta( $user_id, GPMI_AVATAR_META, true ) : 0;
+	$inherited     = $user_id ? gpmi_avatar_id( $user_id ) : 0;
 	$preview       = $inherited ? wp_get_attachment_image_url( $inherited, 'thumbnail' ) : '';
 	?>
 	<h2><?php esc_html_e( 'Foto', 'gpmi' ); ?></h2>
@@ -215,10 +222,10 @@ function gpmi_avatar_field( $user ) {
 
 					<p class="description">
 						<?php
-						if ( ! $attachment_id && $inherited ) {
+						if ( $user_id && ! $attachment_id && $inherited ) {
 							esc_html_e( 'Foto ereditata da un plugin precedente. Scegline una nuova per sostituirla.', 'gpmi' );
 						} else {
-							esc_html_e( 'Immagine quadrata, almeno 300x300 pixel. Se non ne scegli una viene usato Gravatar.', 'gpmi' );
+							esc_html_e( 'Immagine quadrata, almeno 300x300 pixel. Senza foto si ricade su Gravatar, che mostra qualcosa solo a chi ha un account collegato a quell\'indirizzo email.', 'gpmi' );
 						}
 						?>
 					</p>
@@ -230,24 +237,37 @@ function gpmi_avatar_field( $user ) {
 }
 add_action( 'show_user_profile', 'gpmi_avatar_field' );
 add_action( 'edit_user_profile', 'gpmi_avatar_field' );
+// Anche in creazione: aggiungere una firma e poi doverla riaprire per la foto
+// e' un passaggio in piu' che su una redazione numerosa si paga ogni volta.
+add_action( 'user_new_form', 'gpmi_avatar_field' );
 
 /**
- * Salva la foto scelta.
+ * Salva la foto scelta, sia modificando un utente sia creandone uno.
  *
- * @param int $user_id Utente salvato.
+ * user_register scatta anche per registrazioni dal front-end e per creazioni da
+ * codice: si agisce solo se il campo e' stato inviato da una schermata di
+ * amministrazione, con nonce valido e permessi adeguati.
+ *
+ * @param int $user_id Utente salvato o appena creato.
  */
 function gpmi_save_avatar_field( $user_id ) {
-	// La capacita' va sempre verificata: l'hook scatta per qualsiasi utente.
-	if ( ! current_user_can( 'edit_user', $user_id ) ) {
+	if ( ! isset( $_POST['gpmi_avatar_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- il nonce e' verificato subito sotto.
 		return;
 	}
 
-	// Il nonce e' quello del modulo profilo del core.
-	if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_wpnonce'] ) ), 'update-user_' . $user_id ) ) {
-		return;
+	$authorized = false;
+
+	if ( isset( $_POST['_wpnonce_create-user'] ) ) {
+		// Schermata "Aggiungi utente".
+		$authorized = current_user_can( 'create_users' )
+			&& wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_wpnonce_create-user'] ) ), 'create-user' );
+	} elseif ( isset( $_POST['_wpnonce'] ) ) {
+		// Schermata di modifica del profilo.
+		$authorized = current_user_can( 'edit_user', $user_id )
+			&& wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_wpnonce'] ) ), 'update-user_' . $user_id );
 	}
 
-	if ( ! isset( $_POST['gpmi_avatar_id'] ) ) {
+	if ( ! $authorized ) {
 		return;
 	}
 
@@ -262,6 +282,7 @@ function gpmi_save_avatar_field( $user_id ) {
 }
 add_action( 'personal_options_update', 'gpmi_save_avatar_field' );
 add_action( 'edit_user_profile_update', 'gpmi_save_avatar_field' );
+add_action( 'user_register', 'gpmi_save_avatar_field' );
 
 /**
  * Carica il selettore della libreria media nelle schermate di profilo.
@@ -269,7 +290,7 @@ add_action( 'edit_user_profile_update', 'gpmi_save_avatar_field' );
  * @param string $hook Schermata corrente.
  */
 function gpmi_avatar_admin_assets( $hook ) {
-	if ( ! in_array( $hook, array( 'profile.php', 'user-edit.php' ), true ) ) {
+	if ( ! in_array( $hook, array( 'profile.php', 'user-edit.php', 'user-new.php' ), true ) ) {
 		return;
 	}
 

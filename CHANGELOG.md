@@ -17,6 +17,15 @@ git checkout v1.0.0 -- wp-content/themes/gpmi
 
 ---
 
+## 1.1.1
+
+### Corretto
+
+- **Campo Foto assente nella schermata "Aggiungi utente".** Compariva solo
+  modificando un profilo gia' esistente, perche' quella schermata usa un hook
+  diverso (`user_new_form`): per ogni nuova firma bisognava salvare e poi
+  riaprire il profilo. Ora la foto si sceglie subito in creazione.
+
 ## 1.1.0
 
 Prima serie di interventi dopo la messa in produzione.
